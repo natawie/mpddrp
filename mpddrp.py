@@ -7,7 +7,7 @@ mpdc=MPDClient();
 mpdc.timeout = 10;
 mpdc.idletimeout = None;
 mpdc.connect("localhost", port=6600);
-client_id= ;
+client_id= 710956455867580427;
 RPC = pp.Presence(client_id);
 RPC.connect();
 print("MPDDRP - github.com/PanKohnih/mpddrp");
