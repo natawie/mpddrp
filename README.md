@@ -3,14 +3,6 @@ mpddrp is a simple python script that displays what you're currently listening t
 ## Requirements
 * [pypresence](https://github.com/qwertyquerty/pypresence)
 * [python-mpd2](https://github.com/Mic92/python-mpd2)
-* An application created on the [Discord Developer Platform](https://discord.com/developers/applications/) with images(names can be changed):
-  - mpdlogo
-  - play
-  - pause
-  - stop
-## Configuration
-* Paste your application's client id after "client_id="
-* (Optional) If you set different names for the pictures on the [Discord Developer Platform](https://discord.com/developers/applications/), change it in the script.
 ## How to run
 If you don't know a thing about python here's what you do:
 ### Windows(not tested)
