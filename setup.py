@@ -12,7 +12,7 @@ if version < (3, 6):
 
 setup(
     name='mpddrp',
-    version='1.1.0',
+    version='1.1.1',
     packages=['mpddrp'],
     author="Franz Łotocki",
     author_email="flotocki002@gmail.com",

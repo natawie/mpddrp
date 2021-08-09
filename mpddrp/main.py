@@ -13,7 +13,7 @@ from .parsing import get_config
 
 def main():
 
-    version = "1.1.0"
+    version = "1.1.1"
     colorama.init()
 
     config = get_config()
