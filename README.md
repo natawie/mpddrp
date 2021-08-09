@@ -3,6 +3,7 @@
 [![python](https://img.shields.io/pypi/pyversions/mpddrp?style=flat-square)](https://www.python.org/)
 [![pypi](https://img.shields.io/pypi/v/mpddrp?style=flat-square)](https://pypi.org/project/mpddrp/)
 [![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=flat-square&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
+![code quality](https://img.shields.io/codefactor/grade/github/akurushimi/mpddrp?style=flat-square)
 
 mpddrp is a simple python script that displays what you're currently listening to through MPD on Discord.
 

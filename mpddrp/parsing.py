@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from sys import exit
+import sys
 from platform import system as psys
 from subprocess import call as oscall
 from os import path
@@ -36,16 +36,16 @@ def get_config():
             for default_setting in default_config["General"]:
                 for setting in config["General"]:
                     if config["General"][setting] == "":
-                        print(f"{colorama.Fore.RED}ERROR!!! {setting} doesn't have a value assigned! Fix ASAP! Exiting!{colorama.Style.RESET_ALL}")
+                        print(f"{colorama.Fore.RED}ERROR!!! {setting} doesn't have a value assigned! Fix ASAP! Sys.Exiting!{colorama.Style.RESET_ALL}")
                         colorama.deinit()
-                        exit(-1)
+                        sys.exit(-1)
                         try:
                             if config["General"][default_setting]:
                                 continue
                         except KeyError:
-                            print(f"{colorama.Fore.RED}ERROR!!! Please add {default_setting} in your config file! Fix ASAP! Exiting!{colorama.Style.RESET_ALL}")
+                            print(f"{colorama.Fore.RED}ERROR!!! Please add {default_setting} in your config file! Fix ASAP! Sys.Exiting!{colorama.Style.RESET_ALL}")
                             colorama.deinit()
-                            exit(-1)
+                            sys.exit(-1)
     else:
         oscall(f"mkdir -p {config_dir}", shell=False)
         with open(config_dir + "config.json", "w") as configfile:
