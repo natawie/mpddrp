@@ -1,47 +1,105 @@
 #!/usr/bin/env python3
 
+# /
+#   mpddrp - MPD Discord Rich Presence
+#   Copyright (C) 2022 Natalia Łotocka
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#                                                                          /
+
+"""main file"""
+
 import sys
-from time import sleep
-from datetime import timedelta
-from platform import system as psys
-from subprocess import call as oscall
+import time
+import datetime
+import platform
+import subprocess
 import colorama
-from mpd import MPDClient
-from pypresence import Presence
+import mpd
+import pypresence
 from .parsing import get_config
+from .colourful_output import success, error, info
 
 
-def main():
+def construct_details(title, album):
+    """constructs the text for the details field in rpc.update() providing length checks"""
 
-    version = "1.1.1"
-    colorama.init()
+    details = title + " | " + album
+    if len(details) > 127:
+        # info("song title + album was too long to display... switching to only song title")
+        if len(title) > 127:
+            # info("song title was too long to display... song title was cut")
+            details = title[:len(title) - 127 - 3] + "..."
+        details = title
+    return details
 
-    config = get_config()
+def attempt_mpd_connection(mpdc, config):
+    """tries to connect to an mpd server"""
 
-    mpdc = MPDClient()
-    mpdc.timeout = int(config["General"]["MPDtimeout"])
-    mpdc.idletimeout = int(config["General"]["MPDtimeout_idle"])
     try:
         mpdc.connect(config["General"]["MPDip"],
                      port=int(config["General"]["MPDport"]))
     except ConnectionRefusedError:
-        print(f"{colorama.Fore.RED}ERROR!!! Either mpd isn't running or you have a mistake in your config. Fix ASAP! Sys.Exiting!{colorama.Style.RESET_ALL}")
-        colorama.deinit()
-        sys.exit(-1)
+        error("ERROR!!! Either mpd isn't running or you have a mistake in your config. Fix ASAP!")
+        info("Waiting 5 seconds then attempting to connect again")
+        try:
+            time.sleep(5)
+        except (KeyboardInterrupt, SystemExit):
+            colorama.deinit()
+            sys.exit(0)
+        attempt_mpd_connection(mpdc, config)
 
-    rpc = Presence(710956455867580427)
-    rpc.connect()
-
-    if psys() == "Windows":
-        oscall("cls", shell=False)
-    else:
-        oscall("clear", shell=False)
-
-    print(f"{colorama.Fore.GREEN}MPDDRP v.{version} - https://github.com/AKurushimi/mpddrp{colorama.Style.RESET_ALL}")
-
+def attempt_rpc_connection(rpc):
+    """tries to connect to discord with rich presence"""
     try:
-        while True:
+        rpc.connect()
+    except (ConnectionRefusedError, pypresence.exceptions.DiscordError, pypresence.exceptions.DiscordNotFound):
+        error("ERROR!!! Either Discord isn't running or there's a problem with your connection")
+        info("Waiting 5 seconds then attempting to connect again")
+        try:
+            time.sleep(5)
+        except (KeyboardInterrupt, SystemExit):
+            colorama.deinit()
+            sys.exit(0)
+        attempt_rpc_connection(rpc)
 
+def main():
+    """main"""
+
+    version = "1.1.2"
+    colorama.init()
+
+    config = get_config()
+
+    mpdc = mpd.MPDClient()
+    mpdc.timeout = int(config["General"]["MPDtimeout"])
+    mpdc.idletimeout = int(config["General"]["MPDtimeout_idle"])
+
+    attempt_mpd_connection(mpdc, config)
+
+    rpc = pypresence.Presence(710956455867580427)
+    attempt_rpc_connection(rpc)
+
+    if platform.system() == "Windows":
+        subprocess.run("cls", shell=False, check=False)
+    else:
+        subprocess.run("clear", shell=False, check=False)
+
+    success(f"mpddrp v{version} - https://github.com/AKurushimi/mpddrp")
+
+    while True:
+        try:
             statusout = mpdc.status()
             csout = mpdc.currentsong()
 
@@ -50,18 +108,18 @@ def main():
                 artist = csout["artist"]
                 album = csout["album"]
                 timevar = statusout["time"].split(":")
-                timenow = str(timedelta(seconds=int(timevar[0])))
-                timeall = str(timedelta(seconds=int(timevar[1])))
+                timenow = str(datetime.timedelta(seconds=int(timevar[0])))
+                timeall = str(datetime.timedelta(seconds=int(timevar[1])))
 
             if statusout["state"] == "play":
-                rpc.update(details=title + " | " + album,
-                           state=timenow + "/" + timeall + " | " + artist,
+                rpc.update(details=construct_details(title, album),
+                           state=artist,
                            large_image="mpdlogo",
                            small_image="play",
-                           small_text="Playing")
+                           small_text=timenow + "/" + timeall)
 
             elif statusout["state"] == "pause":
-                rpc.update(details=title + " | " + album,
+                rpc.update(details=construct_details(title, album),
                            state="Paused | " + artist,
                            large_image="mpdlogo",
                            small_image="pause",
@@ -73,10 +131,13 @@ def main():
                            large_image="mpdlogo",
                            small_image="stop",
                            small_text="Stopped")
-                sleep(1)
-
-    except (KeyboardInterrupt, SystemExit, RuntimeError):
-        rpc.clear()
-        rpc.close()
-        colorama.deinit()
-        sys.exit(0)
+            time.sleep(1)
+        except mpd.base.ConnectionError:
+            attempt_mpd_connection(mpdc, config)
+        except (pypresence.exceptions.InvalidID, pypresence.exceptions.DiscordNotFound):
+            attempt_rpc_connection(rpc)
+        except (KeyboardInterrupt, SystemExit, RuntimeError):
+            rpc.clear()
+            rpc.close()
+            colorama.deinit()
+            sys.exit(0)
